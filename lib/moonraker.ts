@@ -6,23 +6,16 @@ import EventEmitter from "events";
 class MoonrakerAPI extends EventEmitter {
 
     private wss!: WebSocket;
-    private host: string;
+    private ip: string;
     private printerOnline: boolean = false;
     private printerStatus: string = "Unknown";
-    private printerObjects: string[];
 
     private timerHandle!: ReturnType<typeof setTimeout>;
 
-    constructor(host : string, startConnect : boolean = true) {
+    constructor(ip : string, startConnect : boolean = true) {
         super();
 
-        this.printerObjects = ["print_stats"];
-
-        this.host = host;
-        
-        if (!/^(?:f|ht)tps?\:\/\//.test(host)) {
-            this.host = "http://" + host;
-        }
+        this.ip = ip;
         
         this.on("poll", () => this.pollPrinter());
         if(startConnect) {
@@ -35,6 +28,12 @@ class MoonrakerAPI extends EventEmitter {
      */
     public getPrinterStatus() : string {
         return this.printerStatus;
+    }
+
+    public closeConnection() : void {
+        if(this.wss) {
+            this.wss.close();
+        }
     }
 
 
@@ -117,7 +116,7 @@ class MoonrakerAPI extends EventEmitter {
     }
 
     private async connectToPrinterWebSocket() {
-        this.wss = new WebSocket("ws://192.168.10.36:7125/websocket");
+        this.wss = new WebSocket(`ws://${this.ip}:7125/websocket`);
 
         this.wss.on('message', (msg: any) => this.readMessage(msg));
         this.wss.on('error', (msg: any) => console.error(msg));
@@ -173,11 +172,10 @@ class MoonrakerAPI extends EventEmitter {
 
     public async getPrinterInfo() : Promise<string> {
         let result = "Offline";
-        const endpoint = this.host+"/printer/info";
 
         await this.getApiData("/printer/info")
         .then(res => {
-            if(res.result?.state) { result = res.result.state; }
+            if(res.result) { result = res.result; }
         })
         .catch(err => { return err; })
 
@@ -185,7 +183,7 @@ class MoonrakerAPI extends EventEmitter {
     }
 
     private async getApiData(path: string) : Promise<any> {
-        const uri = this.host + path
+        const uri = `http://${this.ip}${path}`
 
         let pr = new Promise(function (resolve, reject) {
             fetch(uri)

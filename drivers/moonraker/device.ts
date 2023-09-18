@@ -111,7 +111,7 @@ class MoonrakerPrinter extends Homey.Device {
    * onAdded is called when the user adds the device, called just after pairing.
    */
   async onAdded() {
-    this.log('MyDevice has been added');
+    this.log('Klipper 3D printer has been added');
   }
 
   /**
@@ -131,7 +131,7 @@ class MoonrakerPrinter extends Homey.Device {
     newSettings: { [key: string]: boolean | string | number | undefined | null };
     changedKeys: string[];
   }): Promise<string | void> {
-    this.log("MyDevice settings where changed");
+    this.log("Klipper 3D printer settings where changed");
   }
 
   /**
@@ -140,16 +140,17 @@ class MoonrakerPrinter extends Homey.Device {
    * @param {string} name The new name
    */
   async onRenamed(name: string) {
-    this.log('MyDevice was renamed');
+    this.log('Klipper 3D printer was renamed');
   }
 
   /**
    * onDeleted is called when the user deleted the device.
    */
   async onDeleted() {
-    this.log('MyDevice has been deleted');
+    this.moonraker.closeConnection();
+    this.moonraker.removeAllListeners();
+    this.log('Klipper 3D printer has been deleted');
   }
-
 }
 
 module.exports = MoonrakerPrinter;

@@ -20,7 +20,7 @@ class MoonrakerDriver extends Homey.Driver {
     })
 
 
-    this.log('MyDriver has been initialized');
+    this.log('Klipper 3D printer driver has been initialized');
   }
   
   async onPair(session: import("homey/lib/PairSession")) {
@@ -28,18 +28,12 @@ class MoonrakerDriver extends Homey.Driver {
       if('start_pair_klipper' === viewId) {
         
         session.setHandler('addMoonrakerPrinter', async (connection) => {
-          const moonraker = new MoonrakerAPI(connection.address);
+          const moonraker = new MoonrakerAPI(connection.address, false);
           return moonraker.getPrinterInfo().catch(error => this.log(error))
         });
       }
     });
   }
-
-  /**
-   * onPairListDevices is called when a user is adding a device and the 'list_devices' view is called.
-   * This should return an array with the data of devices that are available for pairing.
-   */
-
 }
 
 module.exports = MoonrakerDriver;
