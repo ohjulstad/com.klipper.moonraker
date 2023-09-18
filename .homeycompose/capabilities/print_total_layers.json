@@ -1,0 +1,10 @@
+{
+    "type": "number",
+    "title": {
+        "en": "Total number of layers",
+        "no": "Totalt anntall lag"
+    },
+    "setable": false,
+    "getable": true,
+    "icon": "/drivers/moonraker/assets/total_layers.svg"
+}

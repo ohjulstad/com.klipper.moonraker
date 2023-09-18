@@ -1,0 +1,14 @@
+{
+    "pair": {
+        "address": {
+            "field": "Ip Address",
+            "description": "The IP address of the printer"
+        },
+        "legend": "Your Klipper address",
+        "successful": "Printer connected successfuly",
+        "title": "Add Klipper 3D printer",
+        "required": "Must include IP address",
+        "unreachable": "Could not connect to printer IP",
+        "save": "Save"
+    }
+}

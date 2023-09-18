@@ -1,0 +1,9 @@
+{
+    "type": "string",
+    "title": {
+        "en": "Print total time",
+        "no": "Total printtid"
+    },
+    "getable": true,
+    "setable": false
+}

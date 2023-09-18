@@ -1,0 +1,111 @@
+{
+  "triggers": [
+    {
+      "id": "printer-online",
+      "title": {
+        "en": "Printer Online"
+      },
+      "hint": {
+        "en": "3D Printer came online"
+      }
+    },
+    {
+      "id": "printer-offline",
+      "title": {
+        "en": "Printer Offline"
+      },
+      "hint": {
+        "en": "3D printer is bacame offline"
+      }
+    },
+    {
+      "id": "print-started",
+      "title": {
+        "en": "Print started"
+      },
+      "hint": {
+        "en": "Printer started printing"
+      }
+    },
+    {
+      "id": "print-completed",
+      "title": {
+        "en": "Print finished"
+      },
+      "hint": {
+        "en": "Current Print has finised"
+      }
+    },
+    {
+      "id": "print-cancelled",
+      "title": {
+        "en": "Print Cancelled"
+      },
+      "hint": {
+        "en": "Cancelled current print"
+      }
+    },
+    {
+      "id": "print-paused",
+      "title": {
+        "en": "Print has been paused"
+      },
+      "hint": {
+        "en": "Current print has been paused"
+      }
+    },
+    {
+      "id": "print-resumed",
+      "title": {
+        "en": "Print has been resumed"
+      },
+      "hint": {
+        "en": "Current print has been resumed"
+      }
+    },
+    {
+      "id": "print-error",
+      "title": {
+        "en": "Print stopped with error"
+      },
+      "tokens": [
+          {
+            "name": "error-message",
+            "type": "string",
+            "title":{
+              "en": "Error message"
+            }
+          }
+      ],
+      "hint": {
+        "en": "Current print has stopped with error"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "run-gcode",
+      "title": {
+        "en": "Run GCode"
+      },
+      "titleFormated": {
+        "en": "Run GCcode [[GCode]]"
+      },
+      "args": [
+        {
+          "type": "text",
+          "name": "GCode",
+          "placeholder": {
+            "en": "G28"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pause-print",
+      "title": {
+        "en": "Pause the print"
+      }
+    }
+  ]
+}

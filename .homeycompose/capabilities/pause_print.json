@@ -1,0 +1,11 @@
+{
+    "type": "boolean",
+    "uiComponent": "button",
+    "title": {
+        "en": "Pause and resume print",
+        "no": "Pause og fortsett printen"
+    },
+    "setable": true,
+    "getable": true,
+    "icon": "/drivers/moonraker/assets/pause_printer.svg"
+}

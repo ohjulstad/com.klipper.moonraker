@@ -1,0 +1,11 @@
+{
+    "type": "number",
+    "title": {
+        "en": "Print bed temperature",
+        "no": "Print plate temperatur"
+    },
+    "units": "°C",
+    "getable": true,
+    "setable": false,
+    "icon": "/drivers/moonraker/assets/bed_temperature.svg"
+}

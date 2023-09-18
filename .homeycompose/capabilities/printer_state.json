@@ -1,0 +1,10 @@
+{
+    "type": "string",
+    "title": {
+        "en": "Printer status",
+        "no": "Printer status"
+    },
+    "getable": true,
+    "setable": true,
+    "icon": "/drivers/moonraker/assets/printer_state.svg"
+}

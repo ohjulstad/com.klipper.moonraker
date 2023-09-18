@@ -1,0 +1,31 @@
+{
+  "name": {
+    "en": "Moonraker"
+  },
+  "class": "other",
+  "capabilities": [
+    "cancel_print",
+    "pause_print",
+    "print_current_layer",
+    "print_total_layers",
+    "print_total_time",
+    "printer_state",
+    "printer_temperature_bed",
+    "printer_temperature_tool"
+  ],
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
+  "pair": [
+    {
+      "id":"start_pair_klipper"
+    }
+  ],
+  "images": {
+    "small": "{{driverAssetsPath}}/images/small.png",
+    "large": "{{driverAssetsPath}}/images/large.png"
+  }
+}

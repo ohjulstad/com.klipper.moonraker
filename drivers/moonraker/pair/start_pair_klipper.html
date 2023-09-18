@@ -1,0 +1,64 @@
+<script type="text/javascript">
+    $(function () {
+        document.getElementById("submit").addEventListener("click", function() {
+            const connection = {
+                address: document.getElementById('address').value,
+            };
+    
+            if ( '' !== connection.address ) {
+                Homey.showLoadingOverlay();
+                
+                Homey.emit('addMoonrakerPrinter', connection)
+                .then(function (status) {
+    
+                    if ( status === 'Offline' ) {    
+                        Homey.hideLoadingOverlay();
+                        Homey.alert(__('pair.error.unreachable'), 'error');
+                    } else {
+    
+                        const device_data = {
+                            name: 'Moonraker - Printer',
+                            data: {
+                                id: connection.address + '_Moonraker_'
+                            },
+                            settings: { 
+                                address: connection.address
+                            }
+                        };
+    
+                        Homey.createDevice(device_data)
+                        .then(function (result) {
+                            Homey.done();
+                            Homey.hideLoadingOverlay();
+                            Homey.alert(__('pair.successful'), 'info');
+                        })
+                        .catch(function (error) {
+                            Homey.hideLoadingOverlay();
+                            Homey.alert(error);
+                        });
+                    }
+                })
+                .catch(error => {
+                    Homey.hideLoadingOverlay();
+                    Homey.alert(error);
+                });
+            } else {
+                Homey.hideLoadingOverlay();
+                Homey.alert(__('pair.error.required'), 'error');
+            }
+        });
+    });
+    </script>
+    
+    <header class="homey-header">
+        <h1 class="homey-title" data-i18n="pair.title"></h1>
+    </header>
+    <fieldset class="homey-form-fieldset">
+        <legend class="homey-form-legend" data-i18n="pair.legend"></legend>
+            <div class="homey-form-group">
+                <label class="homey-form-label" for="address" data-i18n="pair.address.field"></label>
+                <input class="homey-form-intput" type="text" id="address">
+            </div>
+    </fieldset>
+    
+    <button class="homey-button-primary" id="submit" data-i18n="pair.save">

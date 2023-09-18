@@ -1,0 +1,11 @@
+{
+    "type": "number",
+    "title": {
+        "en": "Nozzle temperatur",
+        "no": "Temperatur dyse"
+    },
+    "units": "°C",
+    "getable": true,
+    "setable": false,
+    "icon": "/drivers/moonraker/assets/extruder_temperature.svg"
+}

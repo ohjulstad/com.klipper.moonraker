@@ -1,0 +1,10 @@
+{
+    "type": "boolean",
+    "uiComponent": "button",
+    "title": {
+        "en": "Cancel current print",
+        "no": "Kanseler print"
+    },
+    "setable": true,
+    "getable": false
+}
