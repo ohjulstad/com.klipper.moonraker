@@ -24,5 +24,10 @@
   "author": {
     "name": "Øyvind Hjulstad",
     "email": "oyvind.hjulstad@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/ohjulstad/com.klipper.moonraker.homey/issues"
   }
+
+
 }
