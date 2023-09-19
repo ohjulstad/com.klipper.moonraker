@@ -202,8 +202,10 @@ class MoonrakerAPI extends EventEmitter {
             await this.getPrinterInfo()
             .then(result => {
                 if(result != "Offline") {
-                    this.printerOnline = true;
-                    this.connectToPrinterWebSocket();
+                    this.connectToPrinterWebSocket().then(() => {
+                        this.emit("PrinterConnected");
+                        this.printerOnline = true;
+                    }).catch(err => {console.log(err)})
                 }
             });
             await new Promise(resolve => setTimeout(resolve, 10000));
