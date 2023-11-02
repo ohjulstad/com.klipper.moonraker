@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import WebSocket from "ws";
 import EventEmitter from "events";
 
+
 class MoonrakerAPI extends EventEmitter {
 
     private wss!: WebSocket;
@@ -23,9 +24,10 @@ class MoonrakerAPI extends EventEmitter {
         }
     }
 
-    /**
-     * name
-     */
+    public getPrinterOnline() : boolean {
+        return this.printerOnline;
+    }
+
     public getPrinterStatus() : string {
         return this.printerStatus;
     }
@@ -72,12 +74,12 @@ class MoonrakerAPI extends EventEmitter {
 
     private readMessage(data : string) : void  {
 
-        this.resetTimer();
-
         const msg  = JSON.parse(data);
-        if(msg.method === 'notify_proc_stat_update') {
-        } //Ignore spam.)
 
+        if(msg.method === 'notify_proc_stat_update') {
+            return;
+        } //Ignore spam.)
+        
         else if(msg.method === 'notify_status_update') {
             msg.params.forEach((val: any)  => {
                 if(typeof val === 'object' && 'print_stats' in val) {
@@ -113,6 +115,8 @@ class MoonrakerAPI extends EventEmitter {
         else {
             this.emit("message", msg);
         }
+        
+        this.resetTimer();
     }
 
     private async connectToPrinterWebSocket() {
@@ -139,7 +143,7 @@ class MoonrakerAPI extends EventEmitter {
         this.wss.terminate();
     }
 
-    async sendGCode(code : string)
+    async sendGCode(code : string): Promise<void>
     {
         const obj = {
             "jsonrpc": "2.0",
@@ -197,12 +201,13 @@ class MoonrakerAPI extends EventEmitter {
         return pr;
     }
 
-    private async pollPrinter() {
+    private async pollPrinter(): Promise<void> {
         while(!this.printerOnline) {
             await this.getPrinterInfo()
             .then(result => {
                 if(result != "Offline") {
-                    this.connectToPrinterWebSocket().then(() => {
+                    this.connectToPrinterWebSocket()
+                    .then(() => {
                         this.emit("PrinterConnected");
                         this.printerOnline = true;
                     }).catch(err => {console.log(err)})
@@ -212,7 +217,7 @@ class MoonrakerAPI extends EventEmitter {
         }
     }
 
-    private resetTimer() {
+    private resetTimer(): void {
         if(this.timerHandle) {
             this.timerHandle.refresh();
         }

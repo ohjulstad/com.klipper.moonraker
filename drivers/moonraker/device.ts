@@ -59,7 +59,7 @@ class MoonrakerPrinter extends Homey.Device {
   }
 
   async printerOffline() {
-    this.homey.flow.getDeviceTriggerCard("printer-offline").trigger(this);
+    await this.homey.flow.getDeviceTriggerCard("printer-offline").trigger(this);
     this.log("Printer went offline");
   }
 
