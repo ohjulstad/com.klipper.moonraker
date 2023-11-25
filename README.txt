@@ -1,6 +1,5 @@
 Add support for 3D Printers that run klipper and moonraker
 
-Consider this a beta.
 The app has been tested on a single Klipper 3D printer with moonraker.
 Setups with multiple printers on one instance of Klipper is untested and probably unsupported.
 

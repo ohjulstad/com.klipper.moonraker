@@ -1,5 +1,5 @@
 {
-  "id": "com.klipper.moonraker.homey",
+  "id": "com.klipper.moonraker",
   "version": "1.0.1",
   "compatibility": ">=5.0.0",
   "sdk": 3,
@@ -26,6 +26,6 @@
     "email": "oyvind.hjulstad@gmail.com"
   },
   "bugs": {
-    "url": "https://github.com/ohjulstad/com.klipper.moonraker.homey/issues"
+    "url": "https://github.com/ohjulstad/com.klipper.moonraker/issues"
   }
 }
