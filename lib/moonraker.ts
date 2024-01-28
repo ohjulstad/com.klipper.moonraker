@@ -8,15 +8,17 @@ class MoonrakerAPI extends EventEmitter {
 
     private wss!: WebSocket;
     private ip: string;
+    private port: number;
     private printerOnline: boolean = false;
     private printerStatus: string = "Unknown";
 
     private timerHandle!: ReturnType<typeof setTimeout>;
 
-    constructor(ip : string, startConnect : boolean = true) {
+    constructor(ip : string, port : number,  startConnect : boolean = true) {
         super();
 
         this.ip = ip;
+        this.port = port;
         
         this.on("poll", () => this.pollPrinter());
         if(startConnect) {
@@ -120,7 +122,7 @@ class MoonrakerAPI extends EventEmitter {
     }
 
     private async connectToPrinterWebSocket() {
-        this.wss = new WebSocket(`ws://${this.ip}:7125/websocket`);
+        this.wss = new WebSocket(`ws://${this.ip}:${this.port}/websocket`);
 
         this.wss.on('message', (msg: any) => this.readMessage(msg));
         this.wss.on('error', (msg: any) => console.error(msg));
@@ -182,7 +184,6 @@ class MoonrakerAPI extends EventEmitter {
             if(res.result) { result = res.result; }
         })
         .catch(err => { return err; })
-
         return result;
     }
 

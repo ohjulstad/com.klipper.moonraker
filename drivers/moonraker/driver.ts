@@ -1,4 +1,5 @@
 import Homey from 'homey';
+import PairSession from 'homey/lib/PairSession';
 import { MoonrakerAPI } from '../../lib/moonraker';
 
 class MoonrakerDriver extends Homey.Driver {
@@ -22,16 +23,14 @@ class MoonrakerDriver extends Homey.Driver {
 
     this.log('Klipper 3D printer driver has been initialized');
   }
-  
-  async onPair(session: import("homey/lib/PairSession")) {
-    session.setHandler('showView', async (viewId) => {
-      if('start_pair_klipper' === viewId) {
-        
-        session.setHandler('addMoonrakerPrinter', async (connection) => {
-          const moonraker = new MoonrakerAPI(connection.address, false);
-          return moonraker.getPrinterInfo().catch(error => this.log(error))
-        });
-      }
+
+  async onPair(session: PairSession) {       
+    this.log("start_pair_klipper");
+
+    session.setHandler('add_Moonraker_Printer', async (connection)  => {
+      this.log(connection);
+      const moonraker = new MoonrakerAPI(connection.address, connection.port, false);
+      return moonraker.getPrinterInfo().catch(error => this.log(error));  
     });
   }
 }

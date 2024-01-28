@@ -1,64 +1,63 @@
 <script type="text/javascript">
-    $(function () {
-        document.getElementById("submit").addEventListener("click", function() {
+    $(function() {
+        document.getElementById("submit").addEventListener("click", () => {
             const connection = {
                 address: document.getElementById('address').value,
+                port: document.getElementById('port').value,
+                name: document.getElementById('name').value
             };
-    
-            if ( '' !== connection.address ) {
+
+            if(connection.address !== '') {
                 Homey.showLoadingOverlay();
                 
-                Homey.emit('addMoonrakerPrinter', connection)
-                .then(function (status) {
-    
-                    if ( status === 'Offline' ) {    
+                console.log("I am logging");
+                Homey.emit('add_Moonraker_Printer', connection).then(result => {
+                    console.log("Got the following data:", result);
+
+                    if(result === 'Offline') {
                         Homey.hideLoadingOverlay();
-                        Homey.alert(__('pair.error.unreachable'), 'error');
-                    } else {
-    
-                        const device_data = {
-                            name:  status.hostname + ' - Printer',
+                        Homey.alert(__('pair.unreachable'), 'error');
+                    }
+                    else {
+                        const printerData = {
+                            name: connection.name,
                             data: {
-                                id: connection.address + '_Klipper_'
+                                id: result.hostname + '_' + connection.address 
                             },
-                            settings: { 
-                                address: connection.address
+                            settings: {
+                                address: connection.address,
+                                port: connection.port
                             }
-                        };
-    
-                        Homey.createDevice(device_data)
-                        .then(function (result) {
+                        }
+
+                        Homey.createDevice(printerData)
+                        .then( () => {
                             Homey.done();
-                            Homey.hideLoadingOverlay();
-                            Homey.alert(__('pair.successful'), 'info');
                         })
-                        .catch(function (error) {
+                        .catch((error) => {
                             Homey.hideLoadingOverlay();
                             Homey.alert(error);
-                        });
+                        })
+
                     }
-                })
-                .catch(error => {
-                    Homey.hideLoadingOverlay();
-                    Homey.alert(error);
                 });
-            } else {
-                Homey.hideLoadingOverlay();
-                Homey.alert(__('pair.error.required'), 'error');
+                console.log("I do Log something at the bottom");
             }
         });
     });
-    </script>
-    
-    <header class="homey-header">
-        <h1 class="homey-title" data-i18n="pair.title"></h1>
-    </header>
-    <fieldset class="homey-form-fieldset">
-        <legend class="homey-form-legend" data-i18n="pair.legend"></legend>
-            <div class="homey-form-group">
-                <label class="homey-form-label" for="address" data-i18n="pair.address.field"></label>
-                <input class="homey-form-intput" type="text" id="address">
-            </div>
-    </fieldset>
-    
-    <button class="homey-button-primary" id="submit" data-i18n="pair.save">
+</script>
+
+<fieldset class="homey-form-fieldset">
+    <legend class="homey-form-legend" data-i18n="pair.legend"></legend>
+        <div class="homey-form-group">
+            <label class="homey-form-label" for="name" data-i18n="pair.connection.name"></label>
+            <input class="homey-form-intput" type="text" id="name" value="Mercury One.1">
+        </div>
+        <div class="homey-form-group">
+            <label class="homey-form-label" for="address" data-i18n="pair.connection.address"></label>
+            <input class="homey-form-intput" type="text" id="address" value="192.168.10.37">
+            <label class="homey-form-label" for="port" data-i18n="pair.connection.port"></label>
+            <input class="homey-form-intput" type="text" id="port" value="7125">
+        </div>
+</fieldset>
+<button class="homey-button-primary" id="submit" data-i18n="pair.save"></button>

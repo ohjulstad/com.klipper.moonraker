@@ -1,8 +1,10 @@
 {
     "pair": {
-        "address": {
-            "field": "Ip Address",
-            "description": "The IP address of the printer"
+        "connection": {
+            "address": "Ip Address",
+            "port": "Communication port. Default 7125",
+            "description": "The IP address of the printer",
+            "name": "The name of the printer"
         },
         "legend": "Your Klipper address",
         "successful": "Printer connected successfuly",

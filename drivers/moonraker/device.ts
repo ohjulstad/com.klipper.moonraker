@@ -14,7 +14,7 @@ class MoonrakerPrinter extends Homey.Device {
 
     this.poll = false;
 
-    this.moonraker = new MoonrakerAPI(this.getSetting('address'));
+    this.moonraker = new MoonrakerAPI(this.getSetting('address'), this.getSetting('port'));
     this.registerMoonrakerEvents();
 
     this.registerCapabilityListener("pause_print", async () => this.pausePrinter());
