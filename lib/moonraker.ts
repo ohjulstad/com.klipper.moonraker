@@ -4,13 +4,46 @@ import WebSocket from "ws";
 import EventEmitter from "events";
 
 
+enum MOONRAKER_EVENTS {
+    PRINT_ERROR = "PrintError",
+    PRINT_CANCELED = "PrintCancelled",
+    PRINT_PAUSED = "PrintPaused",
+    PRINT_COMPLETED = "PrintCompleted",
+    PRINT_RESUMED = "PrintResumed",
+    PRINT_STARTED = "PrintStarted",
+    UPDATE_PRINTER_STATE = "UpdatedPrinterState",
+    EXTRUDER_TEMPERATURE = "ExtruderTemperature",
+    BED_TEMPERATURE = "BedTemperature",
+    PRINT_DURATION = "PrintDuration",
+    PRINT_LAYERS = "PrintLayers",
+    PRINTER_OFFLINE = "PrinterOffline",
+    PRINTER_ONLINE = "PrinterOnline",
+    GENERIC_MESSAGE = "message"
+}
+
+//Based on Moonraker print_stats object. Added offline.
+enum PRINTER_STATUS {
+    PRINTING = "printing",
+    COMPLETE = "complete",
+    ERROR = "error",
+    CANCELED = "cancelled",
+    PAUSED = "paused",
+    STANDBY = "standby",
+    OFFLINE = "offline",
+    UNKNOWN = "unknown"
+}
+
 class MoonrakerAPI extends EventEmitter {
+
+    private readonly TIMEOUT_VALUE: number = 5000;
+    private readonly POLL_INTERVAL: number = 10000;
+    private readonly POLL_EVENT: string = "poll"
 
     private wss!: WebSocket;
     private ip: string;
     private port: number;
     private printerOnline: boolean = false;
-    private printerStatus: string = "Unknown";
+    private printerStatus: string = PRINTER_STATUS.UNKNOWN;
 
     private timerHandle!: ReturnType<typeof setTimeout>;
 
@@ -20,9 +53,9 @@ class MoonrakerAPI extends EventEmitter {
         this.ip = ip;
         this.port = port;
         
-        this.on("poll", () => this.pollPrinter());
+        this.on(this.POLL_EVENT, () => this.pollPrinter());
         if(startConnect) {
-            this.emit("poll");
+            this.emit(this.POLL_EVENT);
         }
     }
 
@@ -44,25 +77,25 @@ class MoonrakerAPI extends EventEmitter {
     private updatePrinterStatus(status: string, message: string = "") : void {
         if(this.printerStatus != status) {
             switch (status) {
-                case "printing":
-                    this.printerStatus === "paused" ? this.emit("PrintResumed") : this.emit("PrintStarted");
+                case PRINTER_STATUS.PRINTING:
+                    this.printerStatus === PRINTER_STATUS.PAUSED ? this.emit(MOONRAKER_EVENTS.PRINT_RESUMED) : this.emit(MOONRAKER_EVENTS.PRINT_STARTED);
                     break;
-                case "complete":
-                    this.emit("PrintCompleted");
+                case PRINTER_STATUS.COMPLETE:
+                    this.emit(MOONRAKER_EVENTS.PRINT_COMPLETED);
                     break;
-                case "error":
-                    this.emit("PrintError", message);
+                case PRINTER_STATUS.ERROR:
+                    this.emit(MOONRAKER_EVENTS.PRINT_ERROR, message);
                     break;
-                case "cancelled":
-                    this.emit("PrintCancelled");
+                case PRINTER_STATUS.CANCELED:
+                    this.emit(MOONRAKER_EVENTS.PRINT_CANCELED);
                     break;
-                case "paused":
-                    this.emit("PrintPaused");
+                case PRINTER_STATUS.PAUSED:
+                    this.emit(MOONRAKER_EVENTS.PRINT_PAUSED);
                     break;
                 default:
                     break;
             }
-            this.emit("UpdatedPrinterState", status);
+            this.emit(MOONRAKER_EVENTS.UPDATE_PRINTER_STATE, status);
             this.printerStatus = status;
         }
     }
@@ -89,33 +122,33 @@ class MoonrakerAPI extends EventEmitter {
                         this.updatePrinterStatus(val.print_stats.state, val.print_stats.message);
                     }
                     if("total_duration" in val.print_stats) {
-                        this.emit("TotalDurationUpdated", this.toHHMMSS(val.print_stats.total_duration));
+                        this.emit(MOONRAKER_EVENTS.PRINT_DURATION, this.toHHMMSS(val.print_stats.total_duration));
                     }
                     if("info" in val.print_stats) {
-                        this.emit("LayersUpdated", val.print_stats.info );
+                        this.emit(MOONRAKER_EVENTS.PRINT_LAYERS, val.print_stats.info );
                     }
                 }
 
                 if(typeof val === 'object' && 'heater_bed' in val) {
-                    this.emit("BedTemperature", val.heater_bed.temperature);                    
+                    this.emit(MOONRAKER_EVENTS.BED_TEMPERATURE, val.heater_bed.temperature);                    
                 }
 
                 if(typeof val === 'object' && 'extruder' in val) {
-                    this.emit("ExtruderTemperature", val.extruder.temperature);
+                    this.emit(MOONRAKER_EVENTS.EXTRUDER_TEMPERATURE, val.extruder.temperature);
                 } 
             });
         }
         else if(msg.method === 'notify_klippy_shutdown') {
-            this.updatePrinterStatus("error", "Klipper Shutdown");
+            this.updatePrinterStatus(PRINTER_STATUS.ERROR, "Klipper Shutdown");
         }
         else if(msg.method === 'notify_klippy_ready') {
-            this.updatePrinterStatus("standby");
+            this.updatePrinterStatus(PRINTER_STATUS.STANDBY);
         }
         else if(msg.result?.status?.print_stats?.state !== undefined) {
             this.updatePrinterStatus(msg.result.status.print_stats.state);
         }
         else {
-            this.emit("message", msg);
+            this.emit(MOONRAKER_EVENTS.GENERIC_MESSAGE, msg);
         }
         
         this.resetTimer();
@@ -137,10 +170,10 @@ class MoonrakerAPI extends EventEmitter {
             clearTimeout(this.timerHandle);
         }
 
-        this.updatePrinterStatus("offline");
+        this.updatePrinterStatus(PRINTER_STATUS.OFFLINE);
         this.printerOnline = false;
-        this.emit('PrinterOffline');
-        this.emit('poll');
+        this.emit(MOONRAKER_EVENTS.PRINTER_OFFLINE);
+        this.emit(this.POLL_EVENT);
         this.wss.removeAllListeners();
         this.wss.terminate();
     }
@@ -174,6 +207,8 @@ class MoonrakerAPI extends EventEmitter {
         }
 
         this.wss.send(JSON.stringify(obj));
+        this.emit(MOONRAKER_EVENTS.PRINTER_ONLINE);
+        this.printerOnline = true;
     }
 
     public async getPrinterInfo() : Promise<string> {
@@ -205,16 +240,16 @@ class MoonrakerAPI extends EventEmitter {
     private async pollPrinter(): Promise<void> {
         while(!this.printerOnline) {
             await this.getPrinterInfo()
-            .then(result => {
+            .then(async result => {
                 if(result != "Offline") {
-                    this.connectToPrinterWebSocket()
-                    .then(() => {
-                        this.emit("PrinterConnected");
-                        this.printerOnline = true;
-                    }).catch(err => {console.log(err)})
+                    await this.connectToPrinterWebSocket()
+                    .catch(err => {console.log(err)});
+                }
+                else {
+                    this.updatePrinterStatus(PRINTER_STATUS.OFFLINE, "Unable to Connect");
                 }
             });
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL));
         }
     }
 
@@ -223,9 +258,11 @@ class MoonrakerAPI extends EventEmitter {
             this.timerHandle.refresh();
         }
         else {
-            this.timerHandle = setTimeout(() => this.connectionClosed("Timeout"), 5000);
+            this.timerHandle = setTimeout(() => this.connectionClosed("Timeout"), this.TIMEOUT_VALUE);
         }
     }
 }
 
 export {MoonrakerAPI};
+export {MOONRAKER_EVENTS};
+export {PRINTER_STATUS};

@@ -1,5 +1,5 @@
 import Homey from 'homey';
-import { MoonrakerAPI } from '../../lib/moonraker';
+import { MOONRAKER_EVENTS, MoonrakerAPI, PRINTER_STATUS } from '../../lib/moonraker';
 
 class MoonrakerPrinter extends Homey.Device {
 
@@ -7,12 +7,9 @@ class MoonrakerPrinter extends Homey.Device {
    * onInit is called when the device is initialized.
    */
   private moonraker!: MoonrakerAPI;
-  private poll!: boolean;
 
   async onInit() {
     this.log(this.getSettings());
-
-    this.poll = false;
 
     this.moonraker = new MoonrakerAPI(this.getSetting('address'), this.getSetting('port'));
     this.registerMoonrakerEvents();
@@ -28,12 +25,16 @@ class MoonrakerPrinter extends Homey.Device {
     this.moonraker.sendGCode(gcode);
   }
 
+  isOnline() : boolean {
+    return this.moonraker.getPrinterOnline();
+  }
+
   async pausePrinter() {
-    if(this.moonraker.getPrinterStatus() === "paused") {
+    if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PAUSED) {
       this.runGcode("RESUME");
       await this.setCapabilityValue("pause_print", false);
     }
-    else if(this.moonraker.getPrinterStatus() === "printing" ) {
+    else if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PRINTING ) {
       this.runGcode("PAUSE");
       await this.setCapabilityValue("pause_print", true);
     }
@@ -45,8 +46,8 @@ class MoonrakerPrinter extends Homey.Device {
 
   async cancelPrint() {
     let printerStatus = this.moonraker.getPrinterStatus();
-    if(printerStatus === "paused" ||
-       printerStatus === "printing") {
+    if(printerStatus === PRINTER_STATUS.PAUSED ||
+       printerStatus === PRINTER_STATUS.PRINTING) {
       this.runGcode("CANCEL_PRINT");
     }
     else {
@@ -77,33 +78,34 @@ class MoonrakerPrinter extends Homey.Device {
   }
 
   registerMoonrakerEvents() {
-    this.moonraker.on("message", (msg: any) => {this.onMessage(msg); });
-    this.moonraker.on("PrinterConnected", () => this.printerConnected());
-    this.moonraker.on("PrinterOffline", () => this.printerOffline());
-    this.moonraker.on("UpdatedPrinterState", (state: string) => this.printerStateUpdated(state));
-    this.moonraker.on("PrintStarted", () => this.homey.flow.getDeviceTriggerCard("print-started").trigger(this));
-    this.moonraker.on("PrintCompleted", () => this.homey.flow.getDeviceTriggerCard("print-completed").trigger(this));
-    this.moonraker.on("PrintCancelled", () => this.homey.flow.getDeviceTriggerCard("print-cancelled").trigger(this));
-    this.moonraker.on("TotalDurationUpdated", (dur: string) => this.setCapabilityValue("print_total_time", dur));
-    this.moonraker.on("BedTemperature", (tmp: number) => this.setCapabilityValue("printer_temperature_bed", tmp));
-    this.moonraker.on("ExtruderTemperature", (tmp: number) => this.setCapabilityValue("printer_temperature_tool", tmp));
+    
+    this.moonraker.on(MOONRAKER_EVENTS.GENERIC_MESSAGE, (msg: any) => {this.onMessage(msg); });
+    this.moonraker.on(MOONRAKER_EVENTS.PRINTER_ONLINE, () => this.printerConnected());
+    this.moonraker.on(MOONRAKER_EVENTS.PRINTER_OFFLINE, () => this.printerOffline());
+    this.moonraker.on(MOONRAKER_EVENTS.UPDATE_PRINTER_STATE, (state: string) => this.printerStateUpdated(state));
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_STARTED, () => this.homey.flow.getDeviceTriggerCard("print-started").trigger(this));
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_COMPLETED, () => this.homey.flow.getDeviceTriggerCard("print-completed").trigger(this));
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_CANCELED, () => this.homey.flow.getDeviceTriggerCard("print-cancelled").trigger(this));
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_DURATION, (dur: string) => this.setCapabilityValue("print_total_time", dur));
+    this.moonraker.on(MOONRAKER_EVENTS.BED_TEMPERATURE, (tmp: number) => this.setCapabilityValue("printer_temperature_bed", tmp));
+    this.moonraker.on(MOONRAKER_EVENTS.EXTRUDER_TEMPERATURE, (tmp: number) => this.setCapabilityValue("printer_temperature_tool", tmp));
 
-    this.moonraker.on("LayersUpdated", (layerinfo: any) => {
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_LAYERS, (layerinfo: any) => {
       this.setCapabilityValue("print_total_layers", layerinfo.total_layer);
       this.setCapabilityValue("print_current_layer", layerinfo.current_layer);
     });
     
-    this.moonraker.on("PrintPaused", () => { 
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_PAUSED, () => { 
       this.homey.flow.getDeviceTriggerCard("print-paused").trigger(this);
       this.setCapabilityValue('pause_print', true);
     });
     
-    this.moonraker.on("PrintResumed", () => {
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_RESUMED, () => {
       this.homey.flow.getDeviceTriggerCard("print-resumed").trigger(this);
       this.setCapabilityValue("pause_print", false);
     });
     
-    this.moonraker.on("PrintError", (message: string) => this.homey.flow.getDeviceTriggerCard("print-error").trigger(this, { "error-message": message }));
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_ERROR, (message: string) => this.homey.flow.getDeviceTriggerCard("print-error").trigger(this, { "error-message": message }));
   }
 
 

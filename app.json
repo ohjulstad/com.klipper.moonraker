@@ -169,6 +169,27 @@
         ]
       }
     ],
+    "conditions": [
+      {
+        "id": "is-online",
+        "title": {
+          "en": "Printer !{{is|isn't}} online"
+        },
+        "titleFormated": {
+          "en": "Printer !{{is|isn't}} online"
+        },
+        "hint": {
+          "en": "Check if the printer is online of offline"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=moonraker"
+          }
+        ]
+      }
+    ],
     "actions": [
       {
         "id": "run-gcode",

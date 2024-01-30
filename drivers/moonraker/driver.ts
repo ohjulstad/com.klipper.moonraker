@@ -9,6 +9,7 @@ class MoonrakerDriver extends Homey.Driver {
    */
   private runGCodeAction = this.homey.flow.getActionCard("run-gcode");
   private pausePrinterAction = this.homey.flow.getActionCard("pause-print");
+  private isOnlineCondition = this.homey.flow.getConditionCard("is-online");
 
   async onInit() {
 
@@ -18,8 +19,11 @@ class MoonrakerDriver extends Homey.Driver {
 
     this.pausePrinterAction.registerRunListener(async (args) => {
       await args.device.pausePrinter();
-    })
+    });
 
+    this.isOnlineCondition.registerRunListener(async (args) => {
+      return await args.device.isOnline();
+    });
 
     this.log('Klipper 3D printer driver has been initialized');
   }

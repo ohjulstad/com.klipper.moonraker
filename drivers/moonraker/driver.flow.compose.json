@@ -107,5 +107,19 @@
         "en": "Pause the print"
       }
     }
+  ],
+  "conditions": [
+    {
+      "id": "is-online",
+      "title": {
+        "en": "Printer !{{is|isn't}} online"
+      },
+      "titleFormated": {
+        "en": "Printer !{{is|isn't}} online"
+      },
+      "hint": {
+        "en": "Check if the printer is online of offline"
+      }
+    }
   ]
 }
