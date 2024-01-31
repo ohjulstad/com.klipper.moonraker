@@ -45,7 +45,7 @@ class MoonrakerAPI extends EventEmitter {
     private printerOnline: boolean = false;
     private printerStatus: string = PRINTER_STATUS.UNKNOWN;
 
-    private timerHandle!: ReturnType<typeof setTimeout>;
+    private timerHandle: NodeJS.Timeout = setTimeout(() => this.connectionClosed("Timeout"), this.TIMEOUT_VALUE);
 
     constructor(ip : string, port : number,  startConnect : boolean = true) {
         super();
@@ -162,6 +162,7 @@ class MoonrakerAPI extends EventEmitter {
         this.wss.on('open', () => this.subscribeToPrintObjects());
         this.wss.on('close', (msg : any) => this.connectionClosed(msg));
 
+        this.timerHandle.refresh();
     }
 
     private connectionClosed(msg : any) : void {
@@ -171,11 +172,11 @@ class MoonrakerAPI extends EventEmitter {
         }
 
         this.updatePrinterStatus(PRINTER_STATUS.OFFLINE);
-        this.printerOnline = false;
         this.emit(MOONRAKER_EVENTS.PRINTER_OFFLINE);
-        this.emit(this.POLL_EVENT);
+        this.printerOnline = false;
         this.wss.removeAllListeners();
         this.wss.terminate();
+        this.emit(this.POLL_EVENT);
     }
 
     async sendGCode(code : string): Promise<void>
@@ -254,12 +255,7 @@ class MoonrakerAPI extends EventEmitter {
     }
 
     private resetTimer(): void {
-        if(this.timerHandle) {
-            this.timerHandle.refresh();
-        }
-        else {
-            this.timerHandle = setTimeout(() => this.connectionClosed("Timeout"), this.TIMEOUT_VALUE);
-        }
+        this.timerHandle.refresh();
     }
 }
 
