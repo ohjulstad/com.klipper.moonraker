@@ -14,11 +14,11 @@ class MoonrakerDriver extends Homey.Driver {
   async onInit() {
 
     this.runGCodeAction.registerRunListener(async (args) => {
-      await args.device.runGcode(args.GCode);
+      return await args.device.runGcode(args.GCode);
     });
 
     this.pausePrinterAction.registerRunListener(async (args) => {
-      await args.device.pausePrinter();
+      return await args.device.pausePrinter();
     });
 
     this.isOnlineCondition.registerRunListener(async (args) => {

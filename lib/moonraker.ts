@@ -36,6 +36,7 @@ enum PRINTER_STATUS {
 class MoonrakerAPI extends EventEmitter {
 
     private readonly TIMEOUT_VALUE: number = 5000;
+    private readonly GCODE_TIMEOUT_VALUE: number = 60000;
     private readonly POLL_INTERVAL: number = 10000;
     private readonly POLL_EVENT: string = "poll"
 
@@ -144,6 +145,10 @@ class MoonrakerAPI extends EventEmitter {
         else if(msg.method === 'notify_klippy_ready') {
             this.updatePrinterStatus(PRINTER_STATUS.STANDBY);
         }
+        else if(msg.id) {
+            console.log(msg);
+            this.emit(msg.id.toString());
+        }
         else if(msg.result?.status?.print_stats?.state !== undefined) {
             this.updatePrinterStatus(msg.result.status.print_stats.state);
         }
@@ -177,15 +182,20 @@ class MoonrakerAPI extends EventEmitter {
 
     async sendGCode(code : string): Promise<void>
     {
+        let time = Date.now();
         const obj = {
             "jsonrpc": "2.0",
             "method": "printer.gcode.script",
             "params": {
                 "script": code
             },
-            "id": 1234
+            "id": time
         }
-        this.wss.send(JSON.stringify(obj));
+        return await new Promise((resolve, reject) => {
+            this.once(time.toString(), resolve);
+            this.wss.send(JSON.stringify(obj));
+            setTimeout(reject, this.GCODE_TIMEOUT_VALUE);
+        });
     }
 
     private async subscribeToPrintObjects() : Promise<void>

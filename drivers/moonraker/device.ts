@@ -20,22 +20,22 @@ class MoonrakerPrinter extends Homey.Device {
     this.log('MoonrakerPrinter has been initialized');
   }
 
-  async runGcode(gcode :  string) {
+  async runGcode(gcode :  string) : Promise<void> {
     this.log(`I want to run som gcode ${gcode}` );
-    this.moonraker.sendGCode(gcode);
+    return this.moonraker.sendGCode(gcode);
   }
 
   isOnline() : boolean {
     return this.moonraker.getPrinterOnline();
   }
 
-  async pausePrinter() {
+  async pausePrinter() : Promise<void> {
     if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PAUSED) {
-      this.runGcode("RESUME");
+      await this.runGcode("RESUME");
       await this.setCapabilityValue("pause_print", false);
     }
     else if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PRINTING ) {
-      this.runGcode("PAUSE");
+      await this.runGcode("PAUSE");
       await this.setCapabilityValue("pause_print", true);
     }
     else {
