@@ -120,6 +120,35 @@
       "hint": {
         "en": "Check if the printer is online of offline"
       }
+    },
+    {
+      "id": "is-status",
+      "title": {
+        "en": "Printer status"
+      },
+      "titleFormated": {
+        "en": "Printer status is [[status]]"
+      },
+      "hint": {
+        "en": "Get current printer status"
+      },
+      "args":[
+        {
+          "type": "dropdown",
+          "name": "status",
+          "title":{"en": "Current status" },
+          "values": [
+            {"id": "printing", "title":{"en": "Printing"} },
+            {"id": "paused", "title":{"en": "Paused"} },
+            {"id": "cancelled", "title":{"en": "Cancelled"} },
+            {"id": "error", "title":{"en": "Error"} },
+            {"id": "standby", "title":{"en": "Standby"} },
+            {"id": "complete", "title":{"en": "Complete"} },
+            {"id": "offline", "title":{"en": "Offline"} }
+
+          ]
+        }
+      ]
     }
   ]
 }

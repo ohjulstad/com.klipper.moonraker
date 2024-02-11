@@ -1,6 +1,6 @@
 import Homey from 'homey';
 import PairSession from 'homey/lib/PairSession';
-import { MoonrakerAPI } from '../../lib/moonraker';
+import { MoonrakerAPI, PRINTER_STATUS } from '../../lib/moonraker';
 
 class MoonrakerDriver extends Homey.Driver {
 
@@ -10,6 +10,7 @@ class MoonrakerDriver extends Homey.Driver {
   private runGCodeAction = this.homey.flow.getActionCard("run-gcode");
   private pausePrinterAction = this.homey.flow.getActionCard("pause-print");
   private isOnlineCondition = this.homey.flow.getConditionCard("is-online");
+  private isStatusCondition = this.homey.flow.getConditionCard("is-status");
 
   async onInit() {
 
@@ -24,6 +25,11 @@ class MoonrakerDriver extends Homey.Driver {
     this.isOnlineCondition.registerRunListener(async (args) => {
       return await args.device.isOnline();
     });
+
+    this.isStatusCondition.registerRunListener(async (args) => {
+      return (await args.device.getPrinterStatus() === args.status);
+    });
+
 
     this.log('Klipper 3D printer driver has been initialized');
   }

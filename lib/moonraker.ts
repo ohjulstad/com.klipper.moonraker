@@ -6,7 +6,7 @@ import EventEmitter from "events";
 
 enum MOONRAKER_EVENTS {
     PRINT_ERROR = "PrintError",
-    PRINT_CANCELED = "PrintCancelled",
+    PRINT_CANCELLED = "PrintCancelled",
     PRINT_PAUSED = "PrintPaused",
     PRINT_COMPLETED = "PrintCompleted",
     PRINT_RESUMED = "PrintResumed",
@@ -26,7 +26,7 @@ enum PRINTER_STATUS {
     PRINTING = "printing",
     COMPLETE = "complete",
     ERROR = "error",
-    CANCELED = "cancelled",
+    CANCELLED = "cancelled",
     PAUSED = "paused",
     STANDBY = "standby",
     OFFLINE = "offline",
@@ -87,8 +87,8 @@ class MoonrakerAPI extends EventEmitter {
                 case PRINTER_STATUS.ERROR:
                     this.emit(MOONRAKER_EVENTS.PRINT_ERROR, message);
                     break;
-                case PRINTER_STATUS.CANCELED:
-                    this.emit(MOONRAKER_EVENTS.PRINT_CANCELED);
+                case PRINTER_STATUS.CANCELLED:
+                    this.emit(MOONRAKER_EVENTS.PRINT_CANCELLED);
                     break;
                 case PRINTER_STATUS.PAUSED:
                     this.emit(MOONRAKER_EVENTS.PRINT_PAUSED);
@@ -146,8 +146,7 @@ class MoonrakerAPI extends EventEmitter {
             this.updatePrinterStatus(PRINTER_STATUS.STANDBY);
         }
         else if(msg.id) {
-            console.log(msg);
-            this.emit(msg.id.toString());
+            this.emit(msg.id.toString(), msg);
         }
         else if(msg.result?.status?.print_stats?.state !== undefined) {
             this.updatePrinterStatus(msg.result.status.print_stats.state);
@@ -198,6 +197,28 @@ class MoonrakerAPI extends EventEmitter {
         });
     }
 
+    async queryPrinterStatus() : Promise<string>
+    {
+        const query = {
+            "jsonrpc": "2.0",
+            "method": "printer.objects.query",
+            "params": {
+                "objects": {
+                    "print_stats": ["state", "message"]
+                }
+            },
+            "id": 5000
+        }
+
+        return await new Promise((resolve, reject) => {
+            this.once("5000", (data) => {
+                this.updatePrinterStatus(data.result.status.print_stats.state, data.result.status.print_stats.message);
+                return resolve;
+            })
+            this.wss.send(JSON.stringify(query));
+        })
+    }
+
     private async subscribeToPrintObjects() : Promise<void>
     {
         const obj = {
@@ -213,9 +234,26 @@ class MoonrakerAPI extends EventEmitter {
             "id": 5434
         }
 
-        this.wss.send(JSON.stringify(obj));
+        await this.sendMsg(obj).catch(() => {console.log("I got some shit happening")});
         this.emit(MOONRAKER_EVENTS.PRINTER_ONLINE);
         this.printerOnline = true;
+        this.queryPrinterStatus();
+    }
+
+    private async sendMsg(msg: object) : Promise<void>
+    {
+        try {
+            if (this.wss.OPEN) {
+                this.wss.send(JSON.stringify(msg));
+            }
+            else {
+                console.log(this.wss.readyState);
+                return Promise.reject("Connection not Open");
+            }
+        } catch (error) {
+            return Promise.reject("failed");
+        }
+        return Promise.resolve();
     }
 
     public async getPrinterInfo() : Promise<string> {

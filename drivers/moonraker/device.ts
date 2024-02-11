@@ -29,6 +29,10 @@ class MoonrakerPrinter extends Homey.Device {
     return this.moonraker.getPrinterOnline();
   }
 
+  getPrinterStatus() : string {
+    return this.moonraker.getPrinterStatus();
+  }
+
   async pausePrinter() : Promise<void> {
     if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PAUSED) {
       await this.runGcode("RESUME");
@@ -85,7 +89,7 @@ class MoonrakerPrinter extends Homey.Device {
     this.moonraker.on(MOONRAKER_EVENTS.UPDATE_PRINTER_STATE, (state: string) => this.printerStateUpdated(state));
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_STARTED, () => this.homey.flow.getDeviceTriggerCard("print-started").trigger(this));
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_COMPLETED, () => this.homey.flow.getDeviceTriggerCard("print-completed").trigger(this));
-    this.moonraker.on(MOONRAKER_EVENTS.PRINT_CANCELED, () => this.homey.flow.getDeviceTriggerCard("print-cancelled").trigger(this));
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_CANCELLED, () => this.homey.flow.getDeviceTriggerCard("print-cancelled").trigger(this));
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_DURATION, (dur: string) => this.setCapabilityValue("print_total_time", dur));
     this.moonraker.on(MOONRAKER_EVENTS.BED_TEMPERATURE, (tmp: number) => this.setCapabilityValue("printer_temperature_bed", tmp));
     this.moonraker.on(MOONRAKER_EVENTS.EXTRUDER_TEMPERATURE, (tmp: number) => this.setCapabilityValue("printer_temperature_tool", tmp));
