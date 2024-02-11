@@ -171,12 +171,15 @@ class MoonrakerAPI extends EventEmitter {
 
     private connectionClosed(msg : string) : void {
 
-        this.updatePrinterStatus(PRINTER_STATUS.OFFLINE);
-        this.emit(MOONRAKER_EVENTS.PRINTER_OFFLINE);
-        this.printerOnline = false;
-        this.wss.removeAllListeners();
-        this.wss.terminate();
-        this.emit(this.POLL_EVENT);
+        if(!(this.printerStatus === PRINTER_STATUS.OFFLINE))
+        {
+            this.updatePrinterStatus(PRINTER_STATUS.OFFLINE);
+            this.emit(MOONRAKER_EVENTS.PRINTER_OFFLINE);
+            this.printerOnline = false;
+            this.wss.removeAllListeners();
+            this.wss.terminate();
+            this.emit(this.POLL_EVENT);
+        }
     }
 
     async sendGCode(code : string): Promise<void>
@@ -192,7 +195,7 @@ class MoonrakerAPI extends EventEmitter {
         }
         return await new Promise((resolve, reject) => {
             this.once(time.toString(), resolve);
-            this.wss.send(JSON.stringify(obj));
+            this.sendMsg(obj).catch(() => reject);
             setTimeout(reject, this.GCODE_TIMEOUT_VALUE);
         });
     }
@@ -215,7 +218,7 @@ class MoonrakerAPI extends EventEmitter {
                 this.updatePrinterStatus(data.result.status.print_stats.state, data.result.status.print_stats.message);
                 return resolve;
             })
-            this.wss.send(JSON.stringify(query));
+            this.sendMsg(query).catch(() => reject);
         })
     }
 
@@ -234,7 +237,7 @@ class MoonrakerAPI extends EventEmitter {
             "id": 5434
         }
 
-        await this.sendMsg(obj).catch(() => {console.log("I got some shit happening")});
+        await this.sendMsg(obj).catch(() => {console.error("Unable to subscribe to print objects")});
         this.emit(MOONRAKER_EVENTS.PRINTER_ONLINE);
         this.printerOnline = true;
         this.queryPrinterStatus();
