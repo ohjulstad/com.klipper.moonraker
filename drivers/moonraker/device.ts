@@ -1,5 +1,6 @@
 import Homey from 'homey';
 import { MOONRAKER_EVENTS, MoonrakerAPI, PRINTER_STATUS } from '../../lib/moonraker';
+import { LayerInfo } from '../../lib/domain/layerinfo';
 
 class MoonrakerPrinter extends Homey.Device {
 
@@ -81,6 +82,7 @@ class MoonrakerPrinter extends Homey.Device {
     this.log("Updated printer state : " + stateMsg);
   }
 
+
   registerMoonrakerEvents() {
     
     this.moonraker.on(MOONRAKER_EVENTS.GENERIC_MESSAGE, (msg: any) => {this.onMessage(msg); });
@@ -94,9 +96,19 @@ class MoonrakerPrinter extends Homey.Device {
     this.moonraker.on(MOONRAKER_EVENTS.BED_TEMPERATURE, (tmp: number) => this.setCapabilityValue("printer_temperature_bed", tmp));
     this.moonraker.on(MOONRAKER_EVENTS.EXTRUDER_TEMPERATURE, (tmp: number) => this.setCapabilityValue("printer_temperature_tool", tmp));
 
-    this.moonraker.on(MOONRAKER_EVENTS.PRINT_LAYERS, (layerinfo: any) => {
-      this.setCapabilityValue("print_total_layers", layerinfo.total_layer);
-      this.setCapabilityValue("print_current_layer", layerinfo.current_layer);
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_LAYERS, (layerinfo: LayerInfo) => {
+
+      if(this.getCapabilityValue("print_current_layer") != layerinfo.currentLayer &&
+         this.getCapabilityValue("print-layer-changed") != "-") {
+        this.homey.flow.getDeviceTriggerCard("print-layer-changed").trigger(this, layerinfo);
+      }
+
+      if(layerinfo.isLastLayer()) {
+        this.homey.flow.getDeviceTriggerCard("print-on-last-layer");
+      }
+
+      this.setCapabilityValue("print_total_layers", layerinfo.totalLayers);
+      this.setCapabilityValue("print_current_layer", layerinfo.currentLayer);
     });
     
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_PAUSED, () => { 

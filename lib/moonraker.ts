@@ -2,6 +2,7 @@
 import fetch from "node-fetch"; 
 import WebSocket from "ws";
 import EventEmitter from "events";
+import { LayerInfo } from "./domain/layerinfo";
 
 
 enum MOONRAKER_EVENTS {
@@ -126,7 +127,7 @@ class MoonrakerAPI extends EventEmitter {
                         this.emit(MOONRAKER_EVENTS.PRINT_DURATION, this.toHHMMSS(val.print_stats.total_duration));
                     }
                     if("info" in val.print_stats) {
-                        this.emit(MOONRAKER_EVENTS.PRINT_LAYERS, val.print_stats.info );
+                        this.emit(MOONRAKER_EVENTS.PRINT_LAYERS, new LayerInfo(val.print_stats.info.current_layer, val.print_stats.info.total_layer));
                     }
                 }
 
@@ -192,7 +193,7 @@ class MoonrakerAPI extends EventEmitter {
                 "script": code
             },
             "id": time
-        }
+        };
         return await new Promise((resolve, reject) => {
             this.once(time.toString(), resolve);
             this.sendMsg(obj).catch(() => reject);
@@ -211,7 +212,7 @@ class MoonrakerAPI extends EventEmitter {
                 }
             },
             "id": 5000
-        }
+        };
 
         return await new Promise((resolve, reject) => {
             this.once("5000", (data) => {
@@ -219,7 +220,7 @@ class MoonrakerAPI extends EventEmitter {
                 return resolve;
             })
             this.sendMsg(query).catch(() => reject);
-        })
+        });
     }
 
     private async subscribeToPrintObjects() : Promise<void>
