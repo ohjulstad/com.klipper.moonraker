@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import WebSocket from "ws";
 import EventEmitter from "events";
 import { LayerInfo } from "./domain/layerinfo";
+import { TimeTools } from "./utils/timetools";
 
 
 enum MOONRAKER_EVENTS {
@@ -19,6 +20,7 @@ enum MOONRAKER_EVENTS {
     PRINT_LAYERS = "PrintLayers",
     PRINTER_OFFLINE = "PrinterOffline",
     PRINTER_ONLINE = "PrinterOnline",
+    PRINTER_STANDBY = "PrinterStansby",
     GENERIC_MESSAGE = "message"
 }
 
@@ -41,7 +43,7 @@ class MoonrakerAPI extends EventEmitter {
     private readonly POLL_INTERVAL: number = 10000;
     private readonly POLL_EVENT: string = "poll"
 
-    private wss!: WebSocket;
+    private ws!: WebSocket;
     private ip: string;
     private port: number;
     private printerOnline: boolean = false;
@@ -70,8 +72,8 @@ class MoonrakerAPI extends EventEmitter {
     }
 
     public closeConnection() : void {
-        if(this.wss) {
-            this.wss.close();
+        if(this.ws) {
+            this.ws.close();
         }
     }
 
@@ -94,19 +96,18 @@ class MoonrakerAPI extends EventEmitter {
                 case PRINTER_STATUS.PAUSED:
                     this.emit(MOONRAKER_EVENTS.PRINT_PAUSED);
                     break;
+                case PRINTER_STATUS.OFFLINE:
+                    this.emit(MOONRAKER_EVENTS.PRINTER_OFFLINE);
+                    break;
+                case PRINTER_STATUS.STANDBY:
+                    this.emit(MOONRAKER_EVENTS.PRINTER_STANDBY);
+                    break;
                 default:
+                    console.log("Unknown printer state : " + status);
                     break;
             }
-            this.emit(MOONRAKER_EVENTS.UPDATE_PRINTER_STATE, status);
             this.printerStatus = status;
         }
-    }
-
-    private toHHMMSS(seconds: number) : string {
-        let hour = Math.floor(seconds / 3600 );
-        let min = Math.floor((seconds - (hour * 3600)) / 60);
-        let sec = Math.floor((seconds - (hour * 3600) - (min * 60)));
-        return hour.toString().padStart(2, '0')+":"+min.toString().padStart(2, '0')+":"+sec.toString().padStart(2, '0');
     }
 
     private readMessage(data : string) : void  {
@@ -124,7 +125,7 @@ class MoonrakerAPI extends EventEmitter {
                         this.updatePrinterStatus(val.print_stats.state, val.print_stats.message);
                     }
                     if("total_duration" in val.print_stats) {
-                        this.emit(MOONRAKER_EVENTS.PRINT_DURATION, this.toHHMMSS(val.print_stats.total_duration));
+                        this.emit(MOONRAKER_EVENTS.PRINT_DURATION, TimeTools.toHHMMSS(val.print_stats.total_duration));
                     }
                     if("info" in val.print_stats) {
                         this.emit(MOONRAKER_EVENTS.PRINT_LAYERS, new LayerInfo(val.print_stats.info.current_layer, val.print_stats.info.total_layer));
@@ -159,27 +160,38 @@ class MoonrakerAPI extends EventEmitter {
         this.resetTimer();
     }
 
-    private async connectToPrinterWebSocket() {
-        this.wss = new WebSocket(`ws://${this.ip}:${this.port}/websocket`);
+    private connectToPrinterWebSocket() : void {
+        this.ws = new WebSocket(`ws://${this.ip}:${this.port}/websocket`);
 
-        this.wss.on('message', (msg: any) => this.readMessage(msg));
-        this.wss.on('error', (msg: any) => console.error(msg));
-        this.wss.on('open', () => this.subscribeToPrintObjects());
-        this.wss.on('close', (msg : any) => this.connectionClosed(msg));
+        this.ws.on('message', (msg: any) => this.readMessage(msg));
+        
+        this.ws.on('error', (msg: any) => console.error("On.Error\n" + msg));
+        
+        this.ws.on('open', () => { 
+            this.subscribeToPrintObjects();
+        });
 
-        this.resetTimer();
+        this.ws.on('close', (msg : any) => { 
+            console.log("On.Close");
+            this.connectionClosed(msg);
+            new Promise(resolve => setTimeout(() => { this.emit(this.POLL_EVENT)}, this.POLL_INTERVAL ) );
+         });
     }
 
     private connectionClosed(msg : string) : void {
+        console.log("Closing connection : " + msg);
 
         if(!(this.printerStatus === PRINTER_STATUS.OFFLINE))
         {
-            this.updatePrinterStatus(PRINTER_STATUS.OFFLINE);
-            this.emit(MOONRAKER_EVENTS.PRINTER_OFFLINE);
+            if(this.timerHandle) { 
+                clearTimeout(this.timerHandle); 
+            }
             this.printerOnline = false;
-            this.wss.removeAllListeners();
-            this.wss.terminate();
-            this.emit(this.POLL_EVENT);
+            this.ws.removeAllListeners();
+            if(this.ws.readyState !== WebSocket.CONNECTING) {
+                this.ws.terminate();
+            }
+            this.updatePrinterStatus(PRINTER_STATUS.OFFLINE);
         }
     }
 
@@ -216,6 +228,7 @@ class MoonrakerAPI extends EventEmitter {
 
         return await new Promise((resolve, reject) => {
             this.once("5000", (data) => {
+                console.log(data);
                 this.updatePrinterStatus(data.result.status.print_stats.state, data.result.status.print_stats.message);
                 return resolve;
             })
@@ -242,16 +255,17 @@ class MoonrakerAPI extends EventEmitter {
         this.emit(MOONRAKER_EVENTS.PRINTER_ONLINE);
         this.printerOnline = true;
         this.queryPrinterStatus();
+        this.resetTimer();
     }
 
     private async sendMsg(msg: object) : Promise<void>
     {
         try {
-            if (this.wss.OPEN) {
-                this.wss.send(JSON.stringify(msg));
+            if (this.ws.OPEN) {
+                this.ws.send(JSON.stringify(msg));
             }
             else {
-                console.log(this.wss.readyState);
+                console.log(this.ws.readyState);
                 return Promise.reject("Connection not Open");
             }
         } catch (error) {
@@ -287,19 +301,8 @@ class MoonrakerAPI extends EventEmitter {
     }
 
     private async pollPrinter(): Promise<void> {
-        while(!this.printerOnline) {
-            await this.getPrinterInfo()
-            .then(async result => {
-                if(result != "Offline") {
-                    await this.connectToPrinterWebSocket()
-                    .catch(err => {console.log(err)});
-                }
-                else {
-                    this.updatePrinterStatus(PRINTER_STATUS.OFFLINE, "Unable to Connect");
-                }
-            });
-            await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL));
-        }
+        this.connectToPrinterWebSocket();
+        console.log("Trying to connect to printer");
     }
 
     private resetTimer(): void {
@@ -307,7 +310,7 @@ class MoonrakerAPI extends EventEmitter {
             this.timerHandle.refresh();
         }
         else {
-            this.timerHandle = setTimeout(() => this.connectionClosed("Timeout"), this.TIMEOUT_VALUE);
+            this.timerHandle = setTimeout(() =>  this.connectionClosed("Timeout"), this.TIMEOUT_VALUE);
         }
     }
 }

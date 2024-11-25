@@ -144,6 +144,38 @@
         ]
       },
       {
+        "id": "print-layer-changed",
+        "title": {
+          "en": "Changed print layer"
+        },
+        "hint": {
+          "en": "Print layer changed"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=moonraker"
+          }
+        ]
+      },
+      {
+        "id": "print-on-last-layer",
+        "title": {
+          "en": "Printing last layer"
+        },
+        "hint": {
+          "en": "Printing last layer"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=moonraker"
+          }
+        ]
+      },
+      {
         "id": "print-error",
         "title": {
           "en": "Print stopped with error"
@@ -195,7 +227,7 @@
           "en": "Printer status"
         },
         "titleFormated": {
-          "en": "Printer status is [[status]]"
+          "en": "Printer status !{{is|isn't}} [[status]]"
         },
         "hint": {
           "en": "Get current printer status"

@@ -36,11 +36,11 @@ class MoonrakerPrinter extends Homey.Device {
 
   async pausePrinter() : Promise<void> {
     if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PAUSED) {
-      await this.runGcode("RESUME");
+      await this.runGcode("RESUME"); //should be configurable
       await this.setCapabilityValue("pause_print", false);
     }
     else if(this.moonraker.getPrinterStatus() === PRINTER_STATUS.PRINTING ) {
-      await this.runGcode("PAUSE");
+      await this.runGcode("PAUSE"); //should be configurable
       await this.setCapabilityValue("pause_print", true);
     }
     else {
@@ -53,7 +53,7 @@ class MoonrakerPrinter extends Homey.Device {
     let printerStatus = this.moonraker.getPrinterStatus();
     if(printerStatus === PRINTER_STATUS.PAUSED ||
        printerStatus === PRINTER_STATUS.PRINTING) {
-      this.runGcode("CANCEL_PRINT");
+      this.runGcode("CANCEL_PRINT"); //should be configurable
     }
     else {
       this.log("Unable to cancel print when it's not printing");
@@ -66,20 +66,13 @@ class MoonrakerPrinter extends Homey.Device {
 
   async printerOffline() {
     await this.homey.flow.getDeviceTriggerCard("printer-offline").trigger(this);
+    await this.setCapabilityValue("printer_state", "Offline");
     this.log("Printer went offline");
   }
 
   async printerConnected() {
     await this.homey.flow.getDeviceTriggerCard("printer-online").trigger(this);
-  }
-
-  async printerStateUpdated(state: string) {
-    if(!this.getAvailable()) {
-      this.setAvailable();
-    }
-    const stateMsg = state.charAt(0).toUpperCase() + state.slice(1);
-    await this.setCapabilityValue("printer_state", stateMsg);
-    this.log("Updated printer state : " + stateMsg);
+    await this.setCapabilityValue("printer_state", "Online");
   }
 
 
@@ -88,8 +81,12 @@ class MoonrakerPrinter extends Homey.Device {
     this.moonraker.on(MOONRAKER_EVENTS.GENERIC_MESSAGE, (msg: any) => {this.onMessage(msg); });
     this.moonraker.on(MOONRAKER_EVENTS.PRINTER_ONLINE, () => this.printerConnected());
     this.moonraker.on(MOONRAKER_EVENTS.PRINTER_OFFLINE, () => this.printerOffline());
-    this.moonraker.on(MOONRAKER_EVENTS.UPDATE_PRINTER_STATE, (state: string) => this.printerStateUpdated(state));
-    this.moonraker.on(MOONRAKER_EVENTS.PRINT_STARTED, () => this.homey.flow.getDeviceTriggerCard("print-started").trigger(this));
+    
+    this.moonraker.on(MOONRAKER_EVENTS.PRINT_STARTED, () => { 
+      this.homey.flow.getDeviceTriggerCard("print-started").trigger(this);
+      this.setCapabilityValue("printer_state", "Printing");
+    });
+    
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_COMPLETED, () => this.homey.flow.getDeviceTriggerCard("print-completed").trigger(this));
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_CANCELLED, () => this.homey.flow.getDeviceTriggerCard("print-cancelled").trigger(this));
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_DURATION, (dur: string) => this.setCapabilityValue("print_total_time", dur));
@@ -99,8 +96,8 @@ class MoonrakerPrinter extends Homey.Device {
     this.moonraker.on(MOONRAKER_EVENTS.PRINT_LAYERS, (layerinfo: LayerInfo) => {
 
       if(this.getCapabilityValue("print_current_layer") != layerinfo.currentLayer &&
-         this.getCapabilityValue("print-layer-changed") != "-") {
-        this.homey.flow.getDeviceTriggerCard("print-layer-changed").trigger(this, layerinfo);
+         this.getCapabilityValue("print_current_layer") != "-") {
+        this.homey.flow.getDeviceTriggerCard("print-layer-changed").trigger(this);
       }
 
       if(layerinfo.isLastLayer()) {
