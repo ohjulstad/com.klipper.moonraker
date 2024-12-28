@@ -11,6 +11,7 @@ class MoonrakerDriver extends Homey.Driver {
   private pausePrinterAction = this.homey.flow.getActionCard("pause-print");
   private isOnlineCondition = this.homey.flow.getConditionCard("is-online");
   private isStatusCondition = this.homey.flow.getConditionCard("is-status");
+  private shutDownPrinterAction = this.homey.flow.getActionCard("shut-down-printer");
 
   async onInit() {
 
@@ -28,6 +29,10 @@ class MoonrakerDriver extends Homey.Driver {
 
     this.isStatusCondition.registerRunListener(async (args) => {
       return (await args.device.getPrinterStatus() === args.status);
+    });
+
+    this.shutDownPrinterAction.registerRunListener(async (args) => {
+      return await args.device.shutDownPrinter();
     });
 
 

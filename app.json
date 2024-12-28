@@ -328,6 +328,19 @@
             "filter": "driver_id=moonraker"
           }
         ]
+      },
+      {
+        "id": "shut-down-printer",
+        "title": {
+          "en": "Shut down printer"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=moonraker"
+          }
+        ]
       }
     ]
   },

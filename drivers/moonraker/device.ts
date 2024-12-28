@@ -1,6 +1,7 @@
 import Homey from 'homey';
 import { MOONRAKER_EVENTS, MoonrakerAPI, PRINTER_STATUS } from '../../lib/moonraker';
 import { LayerInfo } from '../../lib/domain/layerinfo';
+import { equal } from 'assert';
 
 class MoonrakerPrinter extends Homey.Device {
 
@@ -17,6 +18,8 @@ class MoonrakerPrinter extends Homey.Device {
 
     this.registerCapabilityListener("pause_print", async () => this.pausePrinter());
     this.registerCapabilityListener("cancel_print", async () => this.cancelPrint());
+
+    this.setCapabilityValue("printer_state", "Unknown");
 
     this.log('MoonrakerPrinter has been initialized');
   }
@@ -60,21 +63,33 @@ class MoonrakerPrinter extends Homey.Device {
     }
   }
 
+  async shutDownPrinter() : Promise<void>{
+    return this.moonraker.shutDownPrinter();
+  }
+
   async onMessage(data : string) {
     this.log(data);
   }
 
   async printerOffline() {
-    await this.homey.flow.getDeviceTriggerCard("printer-offline").trigger(this);
+    if(!this.isUnknownState()) {
+      await this.homey.flow.getDeviceTriggerCard("printer-offline").trigger(this);
+    }
     await this.setCapabilityValue("printer_state", "Offline");
-    this.log("Printer went offline");
+    this.log("Printer offline");
   }
 
   async printerConnected() {
-    await this.homey.flow.getDeviceTriggerCard("printer-online").trigger(this);
+    if(!this.isUnknownState()) {
+      await this.homey.flow.getDeviceTriggerCard("printer-online").trigger(this);
+    }
     await this.setCapabilityValue("printer_state", "Online");
   }
 
+  isUnknownState() : boolean
+  {
+    return this.getCapabilityValue("printer_state") === "Unknown";
+  }
 
   registerMoonrakerEvents() {
     

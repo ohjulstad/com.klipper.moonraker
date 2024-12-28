@@ -124,6 +124,12 @@
       "title": {
         "en": "Pause the print"
       }
+    },
+    {
+      "id": "shut-down-printer",
+      "title":{
+        "en": "Shut down printer"
+      }
     }
   ],
   "conditions": [

@@ -172,7 +172,6 @@ class MoonrakerAPI extends EventEmitter {
         });
 
         this.ws.on('close', (msg : any) => { 
-            console.log("On.Close");
             this.connectionClosed(msg);
             new Promise(resolve => setTimeout(() => { this.emit(this.POLL_EVENT)}, this.POLL_INTERVAL ) );
          });
@@ -258,6 +257,21 @@ class MoonrakerAPI extends EventEmitter {
         this.resetTimer();
     }
 
+    async shutDownPrinter() : Promise<void> {
+        if(this.printerStatus === PRINTER_STATUS.PRINTING ||
+            this.printerStatus === PRINTER_STATUS.PAUSED ||
+            this.printerStatus === PRINTER_STATUS.OFFLINE) {
+                return Promise.reject("Printer in Invalid state, will not shut down while printing or paused");
+            }
+        
+        const obj = {
+            "jsonrpc": "2.0",
+            "method": "machine.shutdown",
+            "id": 4665
+        };
+        return await this.sendMsg(obj).catch(() => {console.error("Unable to shut down printer")});
+    }
+    
     private async sendMsg(msg: object) : Promise<void>
     {
         try {
