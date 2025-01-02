@@ -1,0 +1,21 @@
+{
+    "title": {
+      "en": "A printer has experienced an ERROR"
+    },
+    "hint": {
+      "en": "When any 3D printer has experienced an error"
+    },
+    "tokens": [
+      {
+        "type": "string",
+        "name": "printer-id",
+        "title": "Printer Name",
+        "example": {"en": "My Printer Name"}
+      },
+      {
+        "type": "string",
+        "name": "error-msg",
+        "title": "Error Message"
+      }
+    ]
+  }

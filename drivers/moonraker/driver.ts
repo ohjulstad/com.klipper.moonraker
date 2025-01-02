@@ -45,7 +45,7 @@ class MoonrakerDriver extends Homey.Driver {
     session.setHandler('add_Moonraker_Printer', async (connection)  => {
       this.log(connection);
       const moonraker = new MoonrakerAPI(connection.address, connection.port, false);
-      return moonraker.getPrinterInfo().catch(error => this.log(error));  
+      return moonraker.getPrinterInfo().catch(error => this.log(error));
     });
   }
 }

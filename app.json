@@ -32,6 +32,92 @@
   "flow": {
     "triggers": [
       {
+        "title": {
+          "en": "Print Completed on a 3d Printer"
+        },
+        "hint": {
+          "en": "When a printer has completed print"
+        },
+        "tokens": [
+          {
+            "type": "string",
+            "name": "printer-id",
+            "title": "Printer Name",
+            "example": {
+              "en": "My Printer Name"
+            }
+          },
+          {
+            "type": "string",
+            "name": "print-completed-duration",
+            "title": "Duration of print"
+          }
+        ],
+        "id": "any-print-completed"
+      },
+      {
+        "title": {
+          "en": "A printer has experienced an ERROR"
+        },
+        "hint": {
+          "en": "When any 3D printer has experienced an error"
+        },
+        "tokens": [
+          {
+            "type": "string",
+            "name": "printer-id",
+            "title": "Printer Name",
+            "example": {
+              "en": "My Printer Name"
+            }
+          },
+          {
+            "type": "string",
+            "name": "error-msg",
+            "title": "Error Message"
+          }
+        ],
+        "id": "any-printer-error"
+      },
+      {
+        "title": {
+          "en": "A printer went offline"
+        },
+        "hint": {
+          "en": "If a printer went offline"
+        },
+        "tokens": [
+          {
+            "type": "string",
+            "name": "printer-id",
+            "title": "Printer Name",
+            "example": {
+              "en": "My Printer Name"
+            }
+          }
+        ],
+        "id": "any-printer-offline"
+      },
+      {
+        "title": {
+          "en": "A printer went online"
+        },
+        "hint": {
+          "en": "If a printer went online"
+        },
+        "tokens": [
+          {
+            "type": "string",
+            "name": "printer-id",
+            "title": "Printer Name",
+            "example": {
+              "en": "My Printer Name"
+            }
+          }
+        ],
+        "id": "any-printer-online"
+      },
+      {
         "id": "printer-online",
         "title": {
           "en": "Printer Online"

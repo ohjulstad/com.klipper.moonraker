@@ -1,0 +1,21 @@
+{
+  "title": {
+    "en": "Print Completed on a 3d Printer"
+  },
+  "hint": {
+    "en": "When a printer has completed print"
+  },
+  "tokens": [
+    {
+      "type": "string",
+      "name": "printer-id",
+      "title": "Printer Name",
+      "example": {"en": "My Printer Name"}
+    },
+    {
+      "type": "string",
+      "name": "print-completed-duration",
+      "title": "Duration of print"
+    }
+  ]
+}
