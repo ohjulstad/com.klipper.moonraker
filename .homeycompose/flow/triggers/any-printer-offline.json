@@ -1,0 +1,16 @@
+{
+  "title": {
+    "en": "A printer went offline"
+  },
+  "hint": {
+    "en": "If a printer went offline"
+  },
+  "tokens": [
+    {
+      "type": "string",
+      "name": "printer-id",
+      "title": "Printer Name",
+      "example": {"en": "My Printer Name"}
+    }
+  ]
+}
